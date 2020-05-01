@@ -56,6 +56,78 @@ class StudentExerciseReports():
 
             # print(all_instructors)
 
+    def exercises_with_students(self):
+        with sqlite3.connect(self.db_path) as conn:
+            db_cursor = conn.cursor()
+            
+            exercises = dict()
+
+            db_cursor.execute("""
+                select
+                    e.Id ExerciseId,
+                    e.Name,
+                    s.Id,
+                    s.FirstName,
+                    s.LastName
+                from Exercise e
+                join StudentExercise se on se.ExerciseId = e.Id
+                join Student s on s.Id = se.StudentId
+            """)
+
+            dataset = db_cursor.fetchall()
+            
+            # print("The data coming back from the db", dataset)
+            
+            # Let's take our list of tuples and convert it to a dictionary with the exercise name as the key and a list of students as the value.
+            # exercises = {
+            #     "Overly Excited": ["Ryan Tanay", "Kate Williams"],
+            #     "ChickenMonkey": ["Juan Rodriguez"],
+            #     "Stock Report": ["Juan Rodriguez", "Natasha Cox"],
+            #     "Urban Planner": ["Ryan Tanay"],
+            #     "Bag o' Loot": ["Juan Rodriguez"]
+            # }
+            for row in dataset:
+                exercise_id = row[0]
+                exercise_name = row[1]
+                student_id = row[2]
+                student_name = f'{row[3]} {row[4]}'
+                
+                if exercise_name not in exercises:
+                    # Add a new key/value pair to the exercises dictionary, where the key is the exercise_name and the value is a list with a single item, the student_name.
+                    exercises[exercise_name] = [student_name]
+                else:
+                    # Since the exercise_name alreadys exists as a key in the dictionary, we get the value for that key, which is a list and add the student_name to the end of that list.
+                    exercises[exercise_name].append(student_name)
+                # print("The dictionary of exercises", exercises)
+                
+                
+            # The output we want to display is:
+            # Overly Excited
+            #     * Ryan Tanay
+            #     * Kate Williams
+
+            # ChickenMonkey
+            #     * Juan Rodriguez
+
+            # Stock Report
+            #     * Juan Rodriguez
+
+            # Urban Planner
+            #     * Ryan Tanay
+            #     * Natasha Cox
+
+            # Bag o' Loot
+            #     * Juan Rodriguez
+            for exercise_name, students in exercises.items():
+                print(exercise_name)
+                for student in students:
+                    print(f'\t* {student}')
+
 
 reports = StudentExerciseReports()
+
+print("*** A list of students ***")
 reports.all_students()
+
+print("*** A list of exercises and the students working on each exercise ***")
+reports.exercises_with_students()
